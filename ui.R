@@ -1,5 +1,7 @@
 library(shinyBS)
 library(plotly)
+library(pROC)
+library(PerformanceAnalytics)
 
 "%+%" <- function(x,y) {paste(x,y,sep="")}
 stock_names = readRDS("stock_names.rds")
