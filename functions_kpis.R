@@ -1,4 +1,24 @@
 
+pROC = function(pred, fpr.stop) {
+  perf <- performance(pred,'tpr','fpr')
+  for (iperf in seq_along(perf@x.values)){
+    ind = which(perf@x.values[[iperf]] <= fpr.stop)
+    perf@y.values[[iperf]] = perf@y.values[[iperf]][ind]
+    perf@x.values[[iperf]] = perf@x.values[[iperf]][ind]
+  }
+  return(perf)
+}
+
+opt.cut = function(perf, pred){
+  cut.ind = mapply(FUN=function(x, y, p){
+    d = (x - 0)^2 + (y-1)^2
+    ind = which(d == min(d))
+    c(sensitivity = y[[ind]], specificity = 1-x[[ind]], 
+      cutoff = p[[ind]])
+  }, perf@x.values, perf@y.values, pred@cutoffs)
+}
+
+
 
 load_predictions = function(M_SELECT) {
   M_TARGET = strsplit(M_SELECT,"_")[[1]][1]
@@ -31,6 +51,8 @@ get_kpis_ML = function(cutoff,d) {
   o
   
 }
+
+
 
 get_kpis_bestcut = function(d,fpr.stop) {
   

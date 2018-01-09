@@ -11,7 +11,8 @@ library(shinyjs)
 library(dplyr)
 library(plotly)
 library(PerformanceAnalytics)
-library(pROC)
+library(ROCR)
+
 
 #---------------------FUNCTIONS
 source("functions_general.R")
