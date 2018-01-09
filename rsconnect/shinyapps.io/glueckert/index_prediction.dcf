@@ -1,0 +1,12 @@
+name: index_prediction
+title: index_prediction
+username:
+account: glueckert
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 255247
+bundleId: 1169125
+url: https://glueckert.shinyapps.io/index_prediction/
+when: 1515526866.2683
+asMultiple: FALSE
+asStatic: FALSE

@@ -10,6 +10,8 @@ library(shinyBS)
 library(shinyjs)
 library(dplyr)
 library(plotly)
+library(PerformanceAnalytics)
+library(pROC)
 
 #---------------------FUNCTIONS
 source("functions_general.R")
