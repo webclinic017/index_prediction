@@ -1,24 +1,38 @@
 library(shinyBS)
 library(plotly)
-library(pROC)
+library(ROCR)
 library(PerformanceAnalytics)
+source("functions_kpis.R")
 
 "%+%" <- function(x,y) {paste(x,y,sep="")}
 stock_names = readRDS("stock_names.rds")
 
 fluidPage(
   tags$head(tags$script(src="nav.js")),
+  tags$head(
+    tags$style(
+      HTML(".shiny-notification {
+              height: 50px;
+              width: 100%;
+              position:fixed;
+              top: 0;
+              left: 0;
+            }
+           "
+      )
+    )
+  ),
   shinyjs::useShinyjs(),
   includeCSS("custom.css"),
   navbarPage("MoneyPrinter 0.4",
              tabPanel("Algo-Trading",class="landing",icon = icon("info-circle",lib = "font-awesome"),
                       HTML("<div class='pcont'>
                            <span class='glyphicon glyphicon-education iconbig'></span>
-                           <h2>Algotrading with machine learning</h2>
-                           predict stock or index direction using machine learning<br>
-                           trade as <a target='_blank' href='http://www.investopedia.com/terms/b/binary-option.asp'>binary option</a> on <a target='_blank' href='http://www.stockpair.com'>Stockpair</a><br>
-                           trade indices on <a target='_blank'  href='http://www.interactivebrokers.com'>Interactive Brokers</a>
-                          
+                           <h2>I enjoy algotrading with machine learning</h2>
+                           directional stock index prediction using machine learning<br>
+                           trading <a target='_blank' href='http://www.investopedia.com/terms/b/binary-option.asp'>binary option</a> on <a target='_blank' href='http://www.stockpair.com'>Stockpair</a><br>
+                           trading indices on <a target='_blank'  href='http://www.interactivebrokers.com'>Interactive Brokers</a></br>
+                           abritrage trading with crypto currencies (different project)
                            </div>"),
                       tags$div(class="pcont",
                                actionButton("BUT_learn", "About Binary Options",class="btn btn-primary"),
@@ -167,14 +181,14 @@ fluidPage(
                               selectInput("i_model", "Select model: ", choices=list.files("models_prediction"), selected = 1, multiple = FALSE,selectize = FALSE),
                                 sliderInput("i_indexinvest", "Investment ($):", min = 1000, max = 50000, value = 10000, step = 1000,pre = "$", sep = ","),
                                 numericInput("i_feelong", "Fee long position (%): ", 0.01, min = NA, max = NA, step = 0.001),
-                                numericInput("i_feeshort", "Fee short position (%): ", 0.01, min = NA, max = NA, step = 0.001),
-                                numericInput("i_feefix", "Fee fix ($): ", 1.00, min = NA, max = NA, step = 1)
+                                numericInput("i_feeshort", "Fee short position (%): ", 0.02, min = NA, max = NA, step = 0.001),
+                                numericInput("i_feefix", "Fee fix ($): ", 1.50, min = NA, max = NA, step = 0.01)
                                 , width = 3),
                               
                             mainPanel(
                      
                                   tags$div(class = "well plot",
-                                           tags$label(class="boxhead","Index day trade: long or short at market opening, re-invest daily"),tags$hr(),
+                                           tags$label(class="boxhead","Backtest index day trade: long or short at market opening, re-invest daily"),tags$hr(),
                                            plotlyOutput("cfd"))
                                   ,
                                   tags$div(class = "well plot",

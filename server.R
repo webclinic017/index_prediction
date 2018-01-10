@@ -12,6 +12,7 @@ library(dplyr)
 library(plotly)
 library(PerformanceAnalytics)
 library(ROCR)
+library(e1071)
 
 
 #---------------------FUNCTIONS
@@ -85,7 +86,10 @@ observeEvent(input$BUT_startsim, {
   updateSelectInput(session, "i_trade", selected = input$i_modal_invest)
 })
   
+  
 list_invest =  reactive({ 
+  
+  withProgress(message = 'Calculation in progress', detail = '...', value = 50, {
       #---binary profit
       out = list()
       tradesize = input$i_trade
@@ -124,36 +128,42 @@ list_invest =  reactive({
       o$day = c(1:DAYS_TRADING_YEAR)
       out$sim_plot = o
       out
-      })
+      
+  })
+})
 
 
 index_pred = reactive({
   
-  MODEL = input$i_model
-  TARGET = strsplit(MODEL,"_")[[1]][1]
-  d=load_predictions(MODEL)
+  withProgress(message = 'Calculation in progress', detail = '...', value = 50, {
   
-  #-----CUTOFF KPIS
-  KPIS_CUTOFF = get_kpis_cutoffs(d)
-  KPIS = list()
-  MONEY = list()
+      MODEL = input$i_model
+      TARGET = strsplit(MODEL,"_")[[1]][1]
+      d=load_predictions(MODEL)
+      
+      #-----CUTOFF KPIS
+      KPIS_CUTOFF = get_kpis_cutoffs(d)
+      KPIS = list()
+      MONEY = list()
+      
+      for (cu in KPIS_CUTOFF$cutoff) {
+        
+        m=create_returns(d,INVEST=input$i_indexinvest,cutoff=cu,FEE_LONG=input$i_feelong/100,FEE_SHORT=input$i_feeshort/100,FEE_FIX=input$i_feefix) 
+        MONEY[[as.character(round(cu,2))]] = m$returns
+        ret = table.AnnualizedReturns(as.xts(m)$returns_delta, scale = NA, Rf = 0.0002, geometric = TRUE, digits = 2)
+        roi_total = m$returns %>% tail(1) / m$returns[1]
+        roi = data.frame(returns_delta=roi_total,row.names = "ROI total" )
+        k=rbind(ret,roi)
+        names(k) = round(cu,2)
+        KPIS[[length(KPIS)+1]] =k
+        
+      }
+      KPIS = do.call("cbind",KPIS)
+      MONEY = data.frame(do.call("cbind",MONEY))
+      MONEY$date = as.Date(rownames(m))
+
+  })
   
-  for (cu in KPIS_CUTOFF$cutoff) {
-    
-    m=create_returns(d,INVEST=input$i_indexinvest,cutoff=cu,FEE_LONG=input$i_feelong/100,FEE_SHORT=input$i_feeshort/100,FEE_FIX=input$i_feefix) 
-    MONEY[[as.character(round(cu,2))]] = m$returns
-    ret = table.AnnualizedReturns(as.xts(m)$returns_delta, scale = NA, Rf = 0.0002, geometric = TRUE, digits = 2)
-    roi_total = m$returns %>% tail(1) / m$returns[1]
-    roi = data.frame(returns_delta=roi_total,row.names = "ROI total" )
-    k=rbind(ret,roi)
-    names(k) = round(cu,2)
-    KPIS[[length(KPIS)+1]] =k
-    
-  }
-  
-  KPIS = do.call("cbind",KPIS)
-  MONEY = data.frame(do.call("cbind",MONEY))
-  MONEY$date = as.Date(rownames(m))
   list(kpis=KPIS,money=MONEY,cuts=KPIS_CUTOFF,target=TARGET)
 })
 
@@ -207,14 +217,14 @@ index_pred = reactive({
   })
 
   output$cfd<- renderPlotly({
-      withProgress(message = 'Calculation in progress', detail = 'This may take a while...', value = 0, {
+    
           ip = index_pred()
-          best = round(max(ip$kpis["ROI total",]))
+          best = round(max(ip$kpis["ROI total",]),2)
           cfd_title= ip$target %+% " cumultative returns by probability CUTOFF\nbest ROI : " %+% best %+% "x"
           dp=melt(ip$money,id.vars = "date")
           #ggplot(dp, aes(x=date)) + geom_line(aes(y = value, colour = variable))
           plot_ly(dp,x=~date,y=~value, type='scatter',mode='lines',split=~variable)  %>%  layout(title = cfd_title )
-      })
+  
   })
   
   output$table_probs <- DT::renderDataTable({

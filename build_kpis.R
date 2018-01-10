@@ -34,4 +34,7 @@ KPIS = do.call("cbind",KPIS)
 MONEY = data.frame(do.call("cbind",MONEY))
 MONEY$date = as.Date(rownames(m))
 
+print(KPIS_CUTOFF)
 print(KPIS)
+
+m %>% head(10)

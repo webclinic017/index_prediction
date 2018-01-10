@@ -34,10 +34,13 @@
   s$target_Close = s[,targetSymbol %+% ".Close"]
   
   #------Targets and SHIFT in future ordered desc
-  TARGETS = s[,names(s) %like% "date" | names(s) %like% "target"]
-  STOCK_TODAY = data.frame(today_Close=TARGETS$target_Close, today_Open=TARGETS$target_Open)
-  TARGETS[,2:ncol(TARGETS)] = sapply(TARGETS[,2:ncol(TARGETS)],FUN=shift,n=1,type="lag")
-
+  TARGETS = s[,c("date","target_Open","target_Close","targetNA")]
+  STOCK_TODAY = data.frame(date=TARGETS$date,today_Open=TARGETS$target_Open,today_Close=TARGETS$target_Close)
+  da=TARGETS$date
+  for (i in 1:length(da)) if (weekdays(da[i])!= "Monday") da[i] = da[i]-1 else da[i] = da[i]-3
+  TARGETS$date = da
+  STOCK_TODAY = merge(STOCK_TODAY,TARGETS,by="date",all.x = T,all.y = F) %>% arrange(desc(date))
+  
   #------ Open and Close rates same day 9-12 and 12-16 (only for US stocks)
   TS_OPCLO = data.frame()
   # dmin = readRDS("stocks_minute/GSPC.rds") %>% filter(hour(datetime) == 12 & minute(datetime) == 0 ) %>% head(1) # DUMMY!!!
@@ -108,10 +111,8 @@
              )
 
   #------MERGE TARGETS
-  s4 = cbind(STOCK_TODAY,TARGETS, s4)
+  s4 = cbind(STOCK_TODAY, s4)
   
-  #-----TODAY_OPEN
-  s4$f.perc_TODAYOPEN_Close_1 = stockdiff(s4$today_Close,s4$target_Open)
   
   #-----Combine forecasts
   #FORE = readRDS("stocks_day/stocks_forecasts_" %+% targetSymbol %+% ".rds")
@@ -159,6 +160,7 @@
   s7=s4
   
   #------------TARGET Next day (ASC)
+  s7$today_delta = ((s7$target_Close / s7$today_Open) -1) * 100
   s7$target_1.pure = (s7$target_Close / s7$target_Open - 1) * 100
  
   #------------TARGET Next day 12-16
@@ -191,7 +193,6 @@
   sf$target_bin <- ifelse(sf[,target] > 0, 1, 0)
   sf$target_sym <- ifelse(sf[,target] > 0, 1, -1)
   sf$target <- cut(sf[,target], breaks=c(-Inf,0, Inf), labels=c("down_stay","up_change"))
-  sf$today_delta = ((sf$target_Close / sf$today_Open) -1) * 100
   
   testdata = c("date","today_Open","today_Close","target_Open","target_Close",
                "today_delta","target_delta","target_bin","target_sym","target")
@@ -206,5 +207,5 @@
 
 source("unit_test_target.R")
 sf %>% dim
-print(sf$date %>% head(10))
+print(sf[1:10,1:10])
 

@@ -80,11 +80,11 @@ create_returns = function(d,INVEST=1000,cutoff=0.5,FEE_LONG=0.0001,FEE_SHORT=0.0
   d$fee_comm = ifelse(is.na(d$pred),0,ifelse(d$pred == 1,FEE_LONG,FEE_SHORT))
   d$pred_return = ifelse(is.na(d$pred),0,ifelse(d$pred == d$target_bin,abs(d$target_delta),-abs(d$target_delta)))
   d$returns = 0
-  d$returns[1] = INVEST + (INVEST * d$pred_return[1] / 100 * 2 * (1-d$fee_comm[1]) ) - FEE_FIX
+  d$returns[1] =  INVEST+ (INVEST * d$pred_return[1] / 100) - (2*INVEST*d$fee_comm[1]) - FEE_FIX
   
   for (i in c(2:nrow(d))) {
     money=d$returns[i-1] 
-    if (!is.na(d$pred[i])) d$returns[i] = (money+ (money * d$pred_return[i] / 100) * (1-d$fee_comm[i])^2) - FEE_FIX
+    if (!is.na(d$pred[i])) d$returns[i] = money+ (money * d$pred_return[i] / 100) - (2*money*d$fee_comm[i]) - FEE_FIX
     else d$returns[i] = money
   }
   d$returns_delta = Delt(d$returns)[,1] # LATER / EARLIER - 1
@@ -92,7 +92,9 @@ create_returns = function(d,INVEST=1000,cutoff=0.5,FEE_LONG=0.0001,FEE_SHORT=0.0
   d$returns_perc = d$returns_delta*100
   rownames(d) = as.Date(d$date)
   out=d[,c("returns","returns_delta","returns_perc")]
+  #out=d
   return(out) 
   
 }
+
 

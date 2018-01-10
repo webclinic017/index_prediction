@@ -8,9 +8,9 @@ library(glmnet)
 #-------------SETTINGS for rolling window and training
 targetSymbol = "FTSE"
 train.days=1050
-test.days=50
+test.days=25
 train_threshold = 0.5    # only train obs where delta is higher 0.5%
-horizon = 40
+horizon = 20
 window = 1000
 days_backtesting = 1000
 
@@ -44,6 +44,7 @@ sf = sf %>% arrange(desc(date))
 back=best_gap=0
 testseq=seq(0,days_backtesting,test.days) 
 tuneGrids=list()
+tuneGrids[["glmnet"]] = glm_grid=expand.grid(.alpha = c(0,1),.lambda = seq(0,0.1,0.025))
 tuneGrids[["glmnet"]] = glm_grid=expand.grid(.alpha = c(0),.lambda = seq(0,0,0))
 features = c(predictorNames) %>% unique
 
@@ -52,7 +53,7 @@ result = data.frame()
 for (back in testseq ) { 
 
   #-------test and trainng data
-  print(back %+% " of " %+% length(testseq))
+  print(back %+% " of " %+% testseq %>% tail(1))
   ro=back 
   split.te <- c((1+ro):(test.days+ro))
   split.tr <- c((test.days+ro+1):(test.days+ro+1+train.days))
@@ -94,6 +95,7 @@ for (back in testseq ) {
                    ,metric = "Accuracy"
                    ,tuneGrid=tuneGrids[[mtype]]
   )
+  print(mlmodel_glmnet)
   up <- predict(object=mlmodel_glmnet, test[,features], type='prob')[,"up_change"]
   down <- predict(object=mlmodel_glmnet, test[,features], type='prob')[,"down_stay"]
   probs_glmnet=up/(up+down)
@@ -109,8 +111,13 @@ for (back in testseq ) {
 }
 
 #-----save predictions
-NAME_MODEL = paste(c(targetSymbol,"R","glment",train.days,test.days), collapse = "_")
+NAME_MODEL = paste(c(targetSymbol,"R","glment",train.days,test.days,train_threshold), collapse = "_")
 write.csv(result,"models_prediction/" %+% NAME_MODEL %+% ".csv",row.names=F)
+
+#-----save model and features
+saveRDS(mlmodel_glmnet,"models/" %+% NAME_MODEL %+% ".rds")
+saveRDS(features,"models/" %+% NAME_MODEL %+% "_features.rds")
+
 
 
 #----cross.cor (ordered ASC: cross.cor.lag > 0 means past data ------# ASC: lag moves past data down to future, lead moves future data up to past

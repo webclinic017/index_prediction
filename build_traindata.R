@@ -28,6 +28,4 @@ source("build_stocks_day_raw.R")
 source("build_stocks.R")
 source("build_features_day.R")
 
-
-
-getSymbols("^FTSE", src = "yahoo",auto.assign = F,from="2010-10-21") %>% tail
+#getSymbols("^AXJO", src = "yahoo",auto.assign = F,from="2018-01-01") %>% tail
