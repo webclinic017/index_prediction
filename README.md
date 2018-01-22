@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-Dataincubator Capstone project: directional index prediction
+# Dataincubator Capstone project: directional index prediction
 ===============================================================================
 
 * **Goal**: predict daily stock index direction using machine learning and explore binary option trading and live trading on interactive brokers
@@ -80,6 +79,3 @@ About binary options
 Stock symbol guides:
 * http://www.qmatix.com/XLQSymbolGuide.htm
 =======
-# index_prediction
-stock index prediction using machine learning
->>>>>>> 3bf87b8c06aea9b09967451052c1e45996620cff
